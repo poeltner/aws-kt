@@ -15,6 +15,7 @@ import {
 import { MainRoutes } from '../../config/navigation/routes';
 import { FontAwesome } from '../../assets/icons';
 import NavigationType from '../../config/navigation/propTypes';
+import { Auth } from 'aws-amplify';
 
 export class SideMenu extends React.Component {
   static propTypes = {
@@ -33,6 +34,14 @@ export class SideMenu extends React.Component {
   renderIcon = () => (
     <Image style={styles.icon} source={this.getThemeImageSource(RkTheme.current)} />
   );
+
+  onClickLogout = () => {
+    Auth.signOut()
+      .then(() => {
+        this.props.screenProps.onStateChange('signIn', null);
+      })
+      .catch(err => console.log("error " + err));
+  }
 
   renderMenu = () => MainRoutes.map(this.renderMenuItem);
 
@@ -65,6 +74,17 @@ export class SideMenu extends React.Component {
           <RkText rkType='logo'>UI Kitten</RkText>
         </View>
         {this.renderMenu()}
+        <TouchableHighlight
+          style={styles.container}
+          underlayColor={RkTheme.current.colors.button.underlay}
+          activeOpacity={1}
+          onPress={() => this.onClickLogout()}>
+          <View style={styles.content}>
+            <View style={styles.content}>
+              <RkText>Logout</RkText>
+            </View>
+          </View>
+        </TouchableHighlight>
       </ScrollView>
     </View>
   )

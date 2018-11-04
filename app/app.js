@@ -8,12 +8,24 @@ import {
   createDrawerNavigator,
   createStackNavigator,
 } from 'react-navigation';
+import Amplify from 'aws-amplify';
+import { withAuthenticator } from 'aws-amplify-react-native';
+import {
+  DefaultSignIn,
+  DefaultSignUp,
+  DefaultConfirmSignUp,
+  DefaultForgotPassword,
+  DefaultRequireNewPassword,
+} from './screens/auth';
 import { withRkTheme } from 'react-native-ui-kitten';
 import { AppRoutes } from './config/navigation/routesBuilder';
 import * as Screens from './screens';
 import { bootstrap } from './config/bootstrap';
 import track from './config/analytics';
 import { data } from './data';
+import awsExports from './aws-exports';
+
+Amplify.configure(awsExports);
 
 bootstrap();
 data.populateData();
@@ -39,15 +51,7 @@ const KittenApp = createStackNavigator({
   headerMode: 'none',
 });
 
-export default class App extends React.Component {
-  state = {
-    isLoaded: false,
-  };
-
-  componentWillMount() {
-    this.loadAssets();
-  }
-
+class App extends React.Component {
   onNavigationStateChange = (previous, current) => {
     const screen = {
       current: this.getCurrentRouteName(current),
@@ -63,30 +67,27 @@ export default class App extends React.Component {
     return route.routes ? this.getCurrentRouteName(route) : route.routeName;
   };
 
-  loadAssets = async () => {
-    await Font.loadAsync({
-      fontawesome: require('./assets/fonts/fontawesome.ttf'),
-      icomoon: require('./assets/fonts/icomoon.ttf'),
-      'Righteous-Regular': require('./assets/fonts/Righteous-Regular.ttf'),
-      'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
-      'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
-      'Roboto-Regular': require('./assets/fonts/Roboto-Regular.ttf'),
-      'Roboto-Light': require('./assets/fonts/Roboto-Light.ttf'),
-    });
-    this.setState({ isLoaded: true });
-  };
-
-  renderLoading = () => (
-    <AppLoading />
-  );
-
   renderApp = () => (
     <View style={{ flex: 1 }}>
-      <KittenApp onNavigationStateChange={this.onNavigationStateChange} />
+      <KittenApp
+        screenProps={{ ...this.props }}
+        onNavigationStateChange={this.onNavigationStateChange}
+      />
     </View>
   );
 
-  render = () => (this.state.isLoaded ? this.renderApp() : this.renderLoading());
+  render = () => (this.renderApp());
 }
 
-Expo.registerRootComponent(App);
+export default withAuthenticator(
+  App,
+  false,
+  [
+    <DefaultSignIn />,
+    <DefaultSignUp />,
+    <DefaultConfirmSignUp />,
+    <DefaultForgotPassword />,
+    <DefaultRequireNewPassword />,
+  ],
+);
+
